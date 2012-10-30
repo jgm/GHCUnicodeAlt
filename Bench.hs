@@ -31,7 +31,7 @@ checkCorrectness :: Eq a => String -> (Char -> a) -> (Char -> a) -> IO ()
 checkCorrectness name f1 f2 = do
   putStrLn $ "Checking correctness of " ++ name
   forM_ ['\x0'..'\x12000'] $ \x ->
-    unless (f1 x == f2 x) $ error "FAILED!"
+    unless (f1 x == f2 x) $ error $ "FAILED on " ++ show x
 
 main :: IO ()
 main = do

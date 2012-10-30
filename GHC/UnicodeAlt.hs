@@ -60,10 +60,18 @@ isAsciiUpper c          =  c >= 'A' && c <= 'Z'
 -- | Selects control characters, which are the non-printing characters of
 -- the Latin-1 subset of Unicode.
 isControl               :: Char -> Bool
+isControl c
+  | c < '\x20'             = True
+  | c < '\x7F'             = False
+  | otherwise              = iswcntrl (fromIntegral (ord c)) /= 0
 
 -- | Selects printable Unicode characters
 -- (letters, numbers, marks, punctuation, symbols and spaces).
 isPrint                 :: Char -> Bool
+isPrint c
+  | c < '\x20'               = False
+  | c < '\x7F'               = True
+  | otherwise                = iswprint (fromIntegral (ord c)) /= 0
 
 -- | Returns 'True' for any Unicode space character, and the control
 -- characters @\\t@, @\\n@, @\\r@, @\\f@, @\\v@.
@@ -85,20 +93,25 @@ isSpace c | c <  '\x1680'   = False  -- avoid expensive call to iswspace
 isUpper                 :: Char -> Bool
 isUpper c
   | isAsciiUpper c = True
-  | c < '\x80'     = False
+  | isAscii c      = False
   | otherwise      = iswupper (fromIntegral (ord c)) /= 0
 
 -- | Selects lower-case alphabetic Unicode characters (letters).
 isLower                 :: Char -> Bool
 isLower c
   | isAsciiLower c = True
-  | c < '\x80'     = False
+  | isAscii c      = False
   | otherwise      = iswlower (fromIntegral (ord c)) /= 0
 
 -- | Selects alphabetic Unicode characters (lower-case, upper-case and
 -- title-case letters, plus letters of caseless scripts and modifiers letters).
 -- This function is equivalent to 'Data.Char.isLetter'.
 isAlpha                 :: Char -> Bool
+isAlpha c
+  | isAsciiUpper c  = True
+  | isAsciiLower c  = True
+  | isAscii c       = False
+  | otherwise              = iswalpha (fromIntegral (ord c)) /= 0
 
 -- | Selects alphabetic or numeric digit Unicode characters.
 --
@@ -106,6 +119,12 @@ isAlpha                 :: Char -> Bool
 -- function but not by 'isDigit'.  Such digits may be part of identifiers
 -- but are not used by the printer and reader to represent numbers.
 isAlphaNum              :: Char -> Bool
+isAlphaNum c
+  | isAsciiUpper c         = True
+  | isAsciiLower c         = True
+  | isDigit c              = True
+  | isAscii c              = False
+  | otherwise              = iswalnum (fromIntegral (ord c)) /= 0
 
 -- | Selects ASCII digits, i.e. @\'0\'@..@\'9\'@.
 isDigit                 :: Char -> Bool
@@ -125,16 +144,16 @@ isHexDigit c            =  isDigit c || c >= 'A' && c <= 'F' ||
 -- Any other character is returned unchanged.
 toUpper                 :: Char -> Char
 toUpper c
-  | c <= 'z' && c >= 'a' = chr (ord c - 32)
-  | c < '\x80'           = c
+  | isAsciiLower c       = chr (ord c - 32)
+  | isAscii c            = c
   | otherwise            = chr (fromIntegral (towupper (fromIntegral (ord c))))
 
 -- | Convert a letter to the corresponding lower-case letter, if any.
 -- Any other character is returned unchanged.
 toLower                 :: Char -> Char
 toLower c
-  | c <= 'Z' && c >= 'A' = chr (ord c + 32)
-  | c < '\x80'           = c
+  | isAsciiUpper c       = chr (ord c + 32)
+  | isAscii c            = c
   | otherwise            = chr (fromIntegral (towlower (fromIntegral (ord c))))
 
 -- | Convert a letter to the corresponding title-case or upper-case
@@ -143,7 +162,7 @@ toLower c
 -- Any other character is returned unchanged.
 toTitle                 :: Char -> Char
 toTitle c
-  | c < '\x80'           = toUpper c
+  | isAscii c            = toUpper c
   | otherwise            = chr (fromIntegral (towtitle (fromIntegral (ord c))))
 
 
@@ -155,11 +174,11 @@ toTitle c
 
 -- Regardless of the O/S and Library, use the functions contained in WCsubst.c
 
-isAlpha    c = iswalpha (fromIntegral (ord c)) /= 0
-isAlphaNum c = iswalnum (fromIntegral (ord c)) /= 0
---isSpace    c = iswspace (fromIntegral (ord c)) /= 0
-isControl  c = iswcntrl (fromIntegral (ord c)) /= 0
-isPrint    c = iswprint (fromIntegral (ord c)) /= 0
+-- isAlpha    c = iswalpha (fromIntegral (ord c)) /= 0
+-- isAlphaNum c = iswalnum (fromIntegral (ord c)) /= 0
+-- isSpace    c = iswspace (fromIntegral (ord c)) /= 0
+-- isControl  c = iswcntrl (fromIntegral (ord c)) /= 0
+-- isPrint    c = iswprint (fromIntegral (ord c)) /= 0
 -- isLower    c = iswlower (fromIntegral (ord c)) /= 0
 -- isUpper    c = iswupper (fromIntegral (ord c)) /= 0
 -- toLower c = chr (fromIntegral (towlower (fromIntegral (ord c))))
