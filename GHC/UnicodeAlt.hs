@@ -33,7 +33,7 @@ module GHC.UnicodeAlt (
 import GHC.Base
 import GHC.Real        (fromIntegral)
 import Foreign.C.Types (CInt(..))
-import Prelude ((-))
+import Prelude         ((-),(+))
 
 #include "HsBaseConfig.h"
 
@@ -83,9 +83,17 @@ isSpace c | c <  '\x1680'   = False  -- avoid expensive call to iswspace
 -- Title case is used by a small number of letter ligatures like the
 -- single-character form of /Lj/.
 isUpper                 :: Char -> Bool
+isUpper c
+  | isAsciiUpper c = True
+  | c < '\x80'     = False
+  | otherwise      = iswupper (fromIntegral (ord c)) /= 0
 
 -- | Selects lower-case alphabetic Unicode characters (letters).
 isLower                 :: Char -> Bool
+isLower c
+  | isAsciiLower c = True
+  | c < '\x80'     = False
+  | otherwise      = iswlower (fromIntegral (ord c)) /= 0
 
 -- | Selects alphabetic Unicode characters (lower-case, upper-case and
 -- title-case letters, plus letters of caseless scripts and modifiers letters).
@@ -116,16 +124,28 @@ isHexDigit c            =  isDigit c || c >= 'A' && c <= 'F' ||
 -- | Convert a letter to the corresponding upper-case letter, if any.
 -- Any other character is returned unchanged.
 toUpper                 :: Char -> Char
+toUpper c
+  | c <= 'z' && c >= 'a' = chr (ord c - 32)
+  | c < '\x80'           = c
+  | otherwise            = chr (fromIntegral (towupper (fromIntegral (ord c))))
 
 -- | Convert a letter to the corresponding lower-case letter, if any.
 -- Any other character is returned unchanged.
 toLower                 :: Char -> Char
+toLower c
+  | c <= 'Z' && c >= 'A' = chr (ord c + 32)
+  | c < '\x80'           = c
+  | otherwise            = chr (fromIntegral (towlower (fromIntegral (ord c))))
 
 -- | Convert a letter to the corresponding title-case or upper-case
 -- letter, if any.  (Title case differs from upper case only for a small
 -- number of ligature letters.)
 -- Any other character is returned unchanged.
 toTitle                 :: Char -> Char
+toTitle c
+  | c < '\x80'           = toUpper c
+  | otherwise            = chr (fromIntegral (towtitle (fromIntegral (ord c))))
+
 
 -- -----------------------------------------------------------------------------
 -- Implementation with the supplied auto-generated Unicode character properties
@@ -140,17 +160,11 @@ isAlphaNum c = iswalnum (fromIntegral (ord c)) /= 0
 --isSpace    c = iswspace (fromIntegral (ord c)) /= 0
 isControl  c = iswcntrl (fromIntegral (ord c)) /= 0
 isPrint    c = iswprint (fromIntegral (ord c)) /= 0
-isUpper    c = iswupper (fromIntegral (ord c)) /= 0
-isLower    c = iswlower (fromIntegral (ord c)) /= 0
-
-toLower c = chr (fromIntegral (towlower (fromIntegral (ord c))))
-
-toUpper c
-  | c <= 'z' && c >= 'a' = chr (ord c - 32)
-  | c < '\x80'           = c
-  | otherwise            = chr (fromIntegral (towupper (fromIntegral (ord c))))
-
-toTitle c = chr (fromIntegral (towtitle (fromIntegral (ord c))))
+-- isLower    c = iswlower (fromIntegral (ord c)) /= 0
+-- isUpper    c = iswupper (fromIntegral (ord c)) /= 0
+-- toLower c = chr (fromIntegral (towlower (fromIntegral (ord c))))
+-- ToUpper    c = chr (fromIntegral (towupper (fromIntegral (ord c))))
+-- toTitle c = chr (fromIntegral (towtitle (fromIntegral (ord c))))
 
 foreign import ccall unsafe "u_iswalpha"
   iswalpha :: CInt -> CInt
