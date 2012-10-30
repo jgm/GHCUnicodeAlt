@@ -41,6 +41,10 @@ main = do
   checkCorrectness "Alt.toUpper" C.toUpper Alt.toUpper
   checkCorrectness "Alt.toLower" C.toLower Alt.toLower
   checkCorrectness "Alt.toTitle" C.toTitle Alt.toTitle
+  checkCorrectness "Alt.isControl" C.isControl Alt.isControl
+  checkCorrectness "Alt.isPrint" C.isPrint Alt.isPrint
+  checkCorrectness "Alt.isAlpha" C.isAlpha Alt.isAlpha
+  checkCorrectness "Alt.isAlphaNum" C.isAlphaNum Alt.isAlphaNum
   defaultMain $
       benchLong [("U.isSpace",U.isSpace)
                 ,("C.isSpace",C.isSpace)
@@ -60,6 +64,18 @@ main = do
    ++ benchFuns [("U.isLower",U.isLower)
                 ,("C.isLower",C.isLower)
                 ,("Alt.isLower",Alt.isLower)]
+   ++ benchFuns [("U.isControl",U.isControl)
+                ,("C.isControl",C.isControl)
+                ,("Alt.isControl",Alt.isControl)]
+   ++ benchFuns [("U.isPrint",U.isPrint)
+                ,("C.isPrint",C.isPrint)
+                ,("Alt.isPrint",Alt.isPrint)]
+   ++ benchFuns [("U.isAlpha",U.isAlpha)
+                ,("C.isAlpha",C.isAlpha)
+                ,("Alt.isAlpha",Alt.isAlpha)]
+   ++ benchFuns [("U.isAlphaNum",U.isAlphaNum)
+                ,("C.isAlphaNum",C.isAlphaNum)
+                ,("Alt.isAlphaNum",Alt.isAlphaNum)]
 
 benchFuns:: (Eq a, NFData a) => [(String, Char -> a)] -> [Benchmark]
 benchFuns funs =
